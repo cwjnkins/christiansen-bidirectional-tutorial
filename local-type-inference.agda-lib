@@ -1,0 +1,3 @@
+name: BiDirTypeInf
+depend: agda-prelude
+include: src
