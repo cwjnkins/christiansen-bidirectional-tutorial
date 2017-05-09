@@ -65,7 +65,7 @@ pTruFls =
   tru <$ pt
   +++ fls <$ pf
 
-{-# TERMINATING #-}
+{-# NON_TERMINATING #-}
 pLam pApp pIf pAnn pLang : P Raw
 
 pLam = lam <$> (pλ *> pn) <*> (pp *> pLang)
@@ -81,15 +81,17 @@ pLang = pVar +++ pIf +++ pTruFls +++ pAnn +++ pLam +++ paren pApp
 parseTerm : String → Maybe Raw
 parseTerm s = parse! pLang (lex s)
 
-private
-  test₂-data : String
-  test₂-data = "\\ 0 . \\ 1 . \\ 2 . ($0 @ ($1 @ $2))"
+-- private
+--   hole : Unit
+--   hole = {!!}
+--   test₂-data : String
+--   test₂-data = "\\ 0 . \\ 1 . \\ 2 . ($0 @ ($1 @ $2))"
 
-  test₂ : Raw
-  test₂ = fromJust (parseTerm test₂-data)
+--   test₂ : Raw
+--   test₂ = fromJust (parseTerm test₂-data)
 
-  test₃-data : String
-  test₃-data = "\\ 0 . if $0 then fls else tru"
+--   test₃-data : String
+--   test₃-data = "\\ 0 . if $0 then fls else tru"
 
-  test₃ : Raw
-  test₃ = fromJust (parseTerm test₃-data)
+--   test₃ : Raw
+--   test₃ = fromJust (parseTerm test₃-data)
