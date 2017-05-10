@@ -41,10 +41,30 @@ private
   eqToken th th = yes refl
   eqToken te te = yes refl
   eqToken x  y  = no unsafeNotEqual
-  
+
+  showToken : Token → String
+  showToken t: = ":"
+  showToken tb = "bool"
+  showToken t⟶ = "->"
+  showToken t$ = "$"
+  showToken (tn x) = show x
+  showToken ta = "@"
+  showToken tt = "tru"
+  showToken tf = "fls"
+  showToken t[ = "("
+  showToken t] = ")"
+  showToken tλ = "\\"
+  showToken tp = "."
+  showToken ti = "if"
+  showToken th = "then"
+  showToken te = "else"
+
 instance
   EqToken : Eq Token
   EqToken = record { _==_ = eqToken }
+
+  ShowToken : Show Token
+  ShowToken = simpleShowInstance showToken
 
 keywordTok : Token → String → TokenDFA Char (Maybe Token)
 keywordTok t k = just t <$ keywordToken (unpackString k)
