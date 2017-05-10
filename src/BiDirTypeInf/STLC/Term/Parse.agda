@@ -81,6 +81,9 @@ pLang = pVar +++ pIf +++ pTruFls +++ pAnn +++ pLam +++ paren pApp
 parseTerm : String → Maybe Raw
 parseTerm s = parse! pLang (lex s)
 
+parseTerm' : String → List (Raw × List Token)
+parseTerm' s = parse pLang (lex s)
+
 -- private
 --   hole : Unit
 --   hole = {!!}
