@@ -25,6 +25,7 @@ inferTy Γ r@(var x) with index∈ Γ x
         <> "\\n" <> show r <> " exceeds cxt by " <> show n)
 ... | found x∈Γ
   = ok (var x∈Γ)
+
 inferTy Γ r'@(app o r) with inferTy Γ o
 ... | bad msg
   = bad ("when inferring " <> show r'
@@ -41,20 +42,24 @@ inferTy Γ r'@(app .(eraseTerm s) r)
     | ok {τ} s
   = bad ("when checking " <> show r'
         <> "\\n " <> show τ <> " != _ -> _")
+
 inferTy Γ r'@(lam x r)
   = bad ("when inferring " <> show r'
         <> "\\n lam must be checked, not inferred")
 inferTy Γ r@(if c t e)
   = bad ("when inferring " <> show r
         <> "\\n if must be checked, not inferred")
+
 inferTy Γ tru = ok tru
 inferTy Γ fls = ok fls
+
 inferTy Γ r'@(in₁ r)
   = bad ("when inferring " <> show r'
         <> "\\n in1 must be checked, not inferred")
 inferTy Γ r'@(in₂ r)
   = bad ("when inferring " <> show r'
         <> "\\n in2 must be checked, not inferred")
+
 inferTy Γ r'@(pr o r) with inferTy Γ o | inferTy Γ r
 ... | bad msg | _
   = bad ("when inferring " <> show r'
@@ -66,6 +71,7 @@ inferTy Γ r'@(pr o r) with inferTy Γ o | inferTy Γ r
         <> "\\n" <> msg)
 ... | ok s | (ok t)
   = ok (pr s t)
+
 inferTy Γ r'@(pr₁ r) with inferTy Γ r
 ... | bad msg
   = bad ("when inferring " <> show r'
@@ -76,6 +82,7 @@ inferTy Γ r'@(pr₁ r) with inferTy Γ r
   = bad ("when inferring " <> show r'
         <> "\\n in context " <> show Γ
         <> "\\n" <> show τ <> " != prod _ _")
+
 inferTy Γ r'@(pr₂ r) with inferTy Γ r
 ... | bad msg
   = bad ("when inferring " <> show r'
@@ -87,6 +94,7 @@ inferTy Γ r'@(pr₂ r) with inferTy Γ r
   = bad ("when inferring " <> show r'
         <> "\\n in context " <> show Γ
         <> "\\n" <> show τ <> " != prod _ _")
+
 inferTy Γ c'@(case c l r)
   = bad ("when inferring " <> show c'
         <> "\\n in context " <> show Γ
