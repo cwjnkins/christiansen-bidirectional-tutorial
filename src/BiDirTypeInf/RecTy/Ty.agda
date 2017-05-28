@@ -91,20 +91,35 @@ un-μ : Ty → Ty
 un-μ (μ τ) = τ
 un-μ τ     = τ
 
-unroll : Ty → Ty
-unroll τ = go-unroll (un-μ τ) 0
-  where
-  go-unroll : Ty → Nat → Ty
-  go-unroll bool n = bool
-  go-unroll (τ₁ ⟶ τ₂) n = (go-unroll τ₁ n) ⟶ (go-unroll τ₂ n)
-  go-unroll (eith τ₁ τ₂) n = eith (go-unroll τ₁ n) (go-unroll τ₂ n)
-  go-unroll (prod τ₁ τ₂) n = prod (go-unroll τ₁ n) (go-unroll τ₂ n)
-  go-unroll (μ τ₁) n = μ (go-unroll τ₁ (suc n))
-  go-unroll (tv x) n with compare x n
+private
+  unroll-helper : (τ τ' : Ty) → Nat → Ty
+  unroll-helper τ bool n = bool
+  unroll-helper τ (τ₁ ⟶ τ₂) n = (unroll-helper τ τ₁ n) ⟶ (unroll-helper τ τ₂ n)
+  unroll-helper τ (eith τ₁ τ₂) n = eith (unroll-helper τ τ₁ n) (unroll-helper τ τ₂ n)
+  unroll-helper τ (prod τ₁ τ₂) n = prod (unroll-helper τ τ₁ n) (unroll-helper τ τ₂ n)
+  unroll-helper τ (μ τ₁) n = μ (unroll-helper τ τ₁ (suc n))
+  unroll-helper τ (tv x) n with compare x n
   ... | less lt = tv x
   ... | equal eq = tag 0 τ
   ... | greater (diff k eq) = tv (k + n) -- this is actually nonsense, right?
-  go-unroll (tag x τ₁) n = tag (suc x) (go-unroll τ₁ n)
+  unroll-helper τ (tag x τ₁) n = tag (suc x) (unroll-helper τ τ₁ n)
+
+  roll-helper : Ty → Nat → Ty
+  roll-helper bool n = bool
+  roll-helper (τ₁ ⟶ τ₂) n = roll-helper τ₁ n ⟶ roll-helper τ₂ n
+  roll-helper (eith τ₁ τ₂) n = eith (roll-helper τ₁ n) (roll-helper τ₂ n)
+  roll-helper (prod τ₁ τ₂) n = prod (roll-helper τ₁ n) (roll-helper τ₂ n)
+  roll-helper (μ τ₁) n
+    = μ (roll-helper τ₁ (suc n))
+  roll-helper (tv x) n = tv x
+  roll-helper (tag x τ₁) n with compare x n
+  ... | less lt = tag x τ₁
+  ... | equal eq = tv n
+  ... | greater (diff k eq) = tag (k + n) τ₁
+
+
+unroll : Ty → Ty
+unroll τ = unroll-helper τ (un-μ τ) 0
 
 private
   test₂-list :
@@ -115,20 +130,7 @@ private
   test₂-list = refl
 
 roll : Ty → Ty
-roll τ = μ (go-roll τ 0)
-  where
-  go-roll : Ty → Nat → Ty
-  go-roll bool n = bool
-  go-roll (τ₁ ⟶ τ₂) n = go-roll τ₁ n ⟶ go-roll τ₂ n
-  go-roll (eith τ₁ τ₂) n = eith (go-roll τ₁ n) (go-roll τ₂ n)
-  go-roll (prod τ₁ τ₂) n = prod (go-roll τ₁ n) (go-roll τ₂ n)
-  go-roll (μ τ₁) n
-    = μ (go-roll τ₁ (suc n))
-  go-roll (tv x) n = tv x
-  go-roll (tag x τ₁) n with compare x n
-  ... | less lt = tag x τ₁
-  ... | equal eq = tv n
-  ... | greater (diff k eq) = tag (k + n) τ₁
+roll τ = μ (roll-helper τ 0)
 
 private
   test₃-list : roll (unroll test₁-list) ≡ test₁-list
@@ -136,3 +138,11 @@ private
 
 postulate
   iso-rec : ∀ τ → μ τ ≡ roll (unroll (μ τ))
+-- iso-rec : ∀ τ → μ τ ≡ roll (unroll (μ τ))
+-- iso-rec bool = refl
+-- iso-rec (τ ⟶ τ₁) = {!!}
+-- iso-rec (eith τ τ₁) = {!!}
+-- iso-rec (prod τ τ₁) = {!!}
+-- iso-rec (μ τ) = {!!}
+-- iso-rec (tv x) = {!!}
+-- iso-rec (tag x τ) = {!!}

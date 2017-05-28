@@ -91,19 +91,41 @@ inferTy Γ c'@(case c l r)
   = bad ("when inferring " <> show c'
         <> "\\n in context " <> show Γ
         <> "case must be checked, not inferred")
+
 inferTy Γ r'@(unrll r) with inferTy Γ r
 ... | bad msg
   = bad ("when inferring " <> show r'
         <> "\\n in context " <> show Γ
         <> "\\n" <> msg)
-... | ok {μ τ} t
-  rewrite iso-rec τ = ok (unrll {τ = unroll (μ τ)} t)
-... | ok {τ} t
+inferTy Γ r'@(unrll .(eraseTerm t)) | ok {μ τ} t with μ τ == roll (unroll (μ τ))
+... | (no neq)
+  = bad ("when inferring " <> show r'
+        <> "\\n in context " <> show Γ
+        <> "\\ninternal error:"
+        <> "\\n " <> show (μ τ) <> " != roll (unroll <> " <> show (μ τ) <> ")"
+        <> "\\n " <> show (roll (unroll (μ τ))))
+... | (yes eq)
+  rewrite eq
+  = ok (unrll {τ = unroll (μ τ)} t)
+inferTy Γ r'@(unrll .(eraseTerm t)) | ok {τ} t
   = bad ("when checking " <> show r'
         <>"\\n" <> show τ <> " is not a recty")
+
+-- inferTy Γ r'@(unrll r) with inferTy Γ r 
+-- ... | bad msg
+--   = bad ("when inferring " <> show r'
+--         <> "\\n in context " <> show Γ
+--         <> "\\n" <> msg)
+-- ... | ok {μ τ} t = {!!}
+--   -- rewrite iso-rec τ = ok (unrll {τ = unroll (μ τ)} t)
+-- ... | ok {τ} t
+--   = bad ("when checking " <> show r'
+--         <>"\\n" <> show τ <> " is not a recty")
+
 inferTy Γ r'@(rll r)
   = bad ("when inferring " <> show r'
         <> "\\n rll must be checked, not inferred")
+
 inferTy Γ r'@(ann τ r) with checkTy Γ r τ
 ... | bad msg
   = bad ("when inferring " <> show r'
@@ -268,7 +290,7 @@ checkTy Γ r'@(pr₂ .(eraseTerm t)) τ₂ | ok {τ} t
 checkTy Γ (case c l r) τ with inferTy Γ c
 checkTy Γ r″@(case c l r) τ | bad msg
   = bad ("when checking " <> show r″ <> " has type " <> show τ
-        <> "\\n in context Γ"
+        <> "\\n in context " <> show Γ
         <> "\\n" <> msg)
 checkTy Γ r″@(case .(eraseTerm c') l r) τ | ok {eith σ' τ'} c'
   with checkTy Γ l (σ' ⟶ τ) | checkTy Γ r (τ' ⟶ τ)
@@ -355,13 +377,14 @@ private
     raw-bad : Raw
     raw-bad
       = ann (list ⟶ bool)
-            (case (var 0)
-                  (lam 1 (var 0))
-                  (lam 1 (pr₁ (var 0))))
+            (lam 0
+                 (case (var 0)
+                       (lam 1 (var 0))
+                       (lam 1 (pr₁ (var 0)))))
 
     -- stuck on postulate iso-rec
     test-inf-ok : TyInf [] raw-ok
     test-inf-ok = inferTy [] raw-ok
 
-    -- hole : Unit
-    -- hole = {!!}
+    test-inf-bad : TyInf [] raw-bad
+    test-inf-bad = inferTy [] raw-bad
