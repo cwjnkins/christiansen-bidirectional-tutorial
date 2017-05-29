@@ -15,6 +15,14 @@ data TyChk (Γ : Cxt) : Raw → Ty → Set where
   ok  : ∀ {τ} (t : Term Γ chk τ) → TyChk Γ (eraseTerm t) τ
   bad : ∀ {r τ} (msg : String)   → TyChk Γ r τ
 
+IsTyInfOk : ∀ {Γ r} → TyInf Γ r → Set
+IsTyInfOk (ok t) = ⊤
+IsTyInfOk (bad msg) = ⊥
+
+IsTyChkOk : ∀ {Γ r τ} → TyChk Γ r τ → Set
+IsTyChkOk (ok t) = ⊤
+IsTyChkOk (bad msg) = ⊥
+
 inferTy : ∀ Γ r → TyInf Γ r
 checkTy : ∀ Γ r τ → TyChk Γ r τ
 
@@ -364,14 +372,11 @@ private
     raw-bad : Raw
     raw-bad = ann list (rll (in₂ tru))
 
-    term-chk-ok : TyChk [] raw-ok list
-    term-chk-ok = checkTy [] raw-ok list
+    term-chk-ok : IsTyChkOk (checkTy [] raw-ok list)
+    term-chk-ok = _
 
-    term-chk-bad : TyChk [] raw-bad list
-    term-chk-bad = checkTy [] raw-bad list
-
-    -- hole : Unit
-    -- hole = {!!}
+    term-chk-bad : ¬ (IsTyChkOk (checkTy [] raw-bad list))
+    term-chk-bad ()
 
   module Test₂ where
     raw-ok : Raw
@@ -390,9 +395,8 @@ private
                        (lam 1 (var 0))
                        (lam 1 (pr₁ (var 0)))))
 
-    -- stuck on postulate iso-rec
-    test-inf-ok : TyInf [] raw-ok
-    test-inf-ok = inferTy [] raw-ok
+    test-inf-ok : IsTyInfOk (inferTy [] raw-ok)
+    test-inf-ok = _
 
-    test-inf-bad : TyInf [] raw-bad
-    test-inf-bad = inferTy [] raw-bad
+    test-inf-bad : ¬ (IsTyInfOk (inferTy [] raw-bad))
+    test-inf-bad ()
